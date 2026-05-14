@@ -1,5 +1,7 @@
 import './style.css'
 import { generatePortfolioHTML } from './template.js'
+import { parseResumeText } from './parser.js'
+import { auth } from './auth.js'
 
 // --- State Management ---
 let state = JSON.parse(localStorage.getItem('profolio-state')) || {
@@ -10,7 +12,13 @@ let state = JSON.parse(localStorage.getItem('profolio-state')) || {
   education: [],
   experience: [],
   projects: [],
-  isAdding: false // Track if we're currently adding a new item (exp/edu/proj)
+  theme: 'minimal',
+  mode: 'dark',
+  isAdding: false,
+  tempItem: null,
+  currentUser: null,
+  authMode: 'login', // 'login' or 'signup'
+  showDashboard: false
 };
 
 const saveState = () => {
@@ -29,8 +37,37 @@ const renderForm = () => {
   sidebar.innerHTML = `
     <div class="builder-header">
       <div class="logo-icon">P</div>
-      <h1 class="builder-title">ProFolio</h1>
+      <h1 class="builder-title">Portfolio</h1>
     </div>
+
+    ${state.currentUser ? `
+      <div class="user-profile">
+        <div class="user-info">
+          <div class="user-avatar">${state.currentUser.username[0].toUpperCase()}</div>
+          <div style="font-size: 0.9rem; font-weight: 600;">${state.currentUser.username}</div>
+        </div>
+        <button class="btn btn-secondary" id="logout-btn" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;">Logout</button>
+      </div>
+      <button class="btn btn-secondary" id="dashboard-btn" style="width: 100%; margin-bottom: 1rem;">
+        ${state.showDashboard ? 'Back to Editor' : 'My Saved Portfolios'}
+      </button>
+    ` : ''}
+
+    ${state.showDashboard ? '' : `
+      <div class="theme-selector">
+        <label>Portfolio Theme</label>
+        <div class="theme-grid">
+          <div class="theme-option ${state.theme === 'minimal' ? 'active' : ''}" data-theme="minimal">Minimal</div>
+          <div class="theme-option ${state.theme === 'creative' ? 'active' : ''}" data-theme="creative">Creative</div>
+          <div class="theme-option ${state.theme === 'corporate' ? 'active' : ''}" data-theme="corporate">Corporate</div>
+          <div class="theme-option ${state.theme === 'modern' ? 'active' : ''}" data-theme="modern">Modern</div>
+        </div>
+        <div class="mode-toggle">
+          <span>${state.mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+          <button class="toggle-btn ${state.mode}" id="mode-toggle-btn"></button>
+        </div>
+      </div>
+    `}
 
     <div class="steps-nav">
       ${[1, 2, 3, 4, 5].map(i => `<div class="step-dot ${state.currentStep >= i ? 'active' : ''}"></div>`).join('')}
@@ -39,8 +76,10 @@ const renderForm = () => {
     <div id="form-content"></div>
 
     <div class="builder-footer" style="margin-top: auto; display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border)">
-      ${state.currentStep > 1 ? '<button class="btn btn-secondary" id="prev-btn">Previous</button>' : ''}
-      ${state.currentStep < 5 ? '<button class="btn btn-primary" style="flex: 1" id="next-btn">Next Step</button>' : '<button class="btn btn-primary" style="flex: 1" id="export-btn">Export Website</button>'}
+      ${state.currentUser ? (state.showDashboard ? '' : `
+        <button class="btn btn-secondary" id="save-portfolio-btn">Save Progress</button>
+        ${state.currentStep < 5 ? '<button class="btn btn-primary" style="flex: 1" id="next-btn">Next Step</button>' : '<button class="btn btn-primary" style="flex: 1" id="export-btn">Export Website</button>'}
+      `) : ''}
     </div>
   `;
 
@@ -50,6 +89,16 @@ const renderForm = () => {
 const renderStepContent = () => {
   const container = document.querySelector('#form-content');
   if (!container) return;
+
+  if (!state.currentUser) {
+    renderAuthForm(container);
+    return;
+  }
+
+  if (state.showDashboard) {
+    renderDashboard(container);
+    return;
+  }
 
   if (state.isAdding) {
     renderAddingForm(container);
@@ -61,6 +110,14 @@ const renderStepContent = () => {
       container.innerHTML = `
         <div class="form-section">
           <h2>Personal Details</h2>
+          
+          <div class="import-section" id="resume-upload-zone">
+            <span class="import-icon">📄</span>
+            <p><strong>Import from Resume (PDF)</strong></p>
+            <p style="font-size: 0.75rem; color: var(--text-secondary)">We'll auto-fill your skills and experience</p>
+            <input type="file" id="resume-file" accept=".pdf" style="display: none">
+          </div>
+
           <div class="input-group">
             <label>Full Name</label>
             <input type="text" id="input-name" value="${state.name}" placeholder="John Doe">
@@ -233,6 +290,106 @@ const renderAddingForm = (container) => {
       break;
   }
   attachAddingListeners();
+  updatePreview(); 
+};
+
+const renderAuthForm = (container) => {
+  container.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <div class="auth-tab ${state.authMode === 'login' ? 'active' : ''}" id="tab-login">Login</div>
+        <div class="auth-tab ${state.authMode === 'signup' ? 'active' : ''}" id="tab-signup">Sign Up</div>
+      </div>
+      <h2>${state.authMode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="auth-username" placeholder="Enter username">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="Enter password">
+      </div>
+      <button class="btn btn-primary" id="auth-submit-btn">
+        ${state.authMode === 'login' ? 'Login' : 'Sign Up'}
+      </button>
+      <p id="auth-error" style="color: #ef4444; font-size: 0.8rem; text-align: center; margin-top: 0.5rem; display: none;"></p>
+    </div>
+  `;
+  attachAuthListeners();
+};
+
+const renderDashboard = (container) => {
+  const portfolios = auth.getPortfolios(state.currentUser.username);
+  container.innerHTML = `
+    <div class="form-section">
+      <h2>My Saved Portfolios</h2>
+      <div class="portfolio-list">
+        ${portfolios.length === 0 ? '<p style="color: var(--text-secondary)">No saved portfolios yet.</p>' : ''}
+        ${portfolios.map(p => `
+          <div class="portfolio-item" data-id="${p.id}">
+            <div>
+              <div style="font-weight: 600;">${p.name || 'Untitled Portfolio'}</div>
+              <div class="portfolio-meta">Updated: ${new Date(p.updatedAt).toLocaleDateString()}</div>
+            </div>
+            <span style="color: var(--accent-primary)">Load →</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  attachDashboardListeners();
+};
+
+const attachAuthListeners = () => {
+  document.querySelector('#tab-login').onclick = () => { state.authMode = 'login'; renderStepContent(); };
+  document.querySelector('#tab-signup').onclick = () => { state.authMode = 'signup'; renderStepContent(); };
+
+  document.querySelector('#auth-submit-btn').onclick = () => {
+    const username = document.querySelector('#auth-username').value;
+    const password = document.querySelector('#auth-password').value;
+    const errorEl = document.querySelector('#auth-error');
+
+    if (!username || !password) {
+      errorEl.textContent = 'All fields are required';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      if (state.authMode === 'login') {
+        state.currentUser = auth.login(username, password);
+      } else {
+        state.currentUser = auth.signup(username, password);
+      }
+      initApp();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    }
+  };
+};
+
+const attachDashboardListeners = () => {
+  document.querySelectorAll('.portfolio-item').forEach(item => {
+    item.onclick = () => {
+      const portfolios = auth.getPortfolios(state.currentUser.username);
+      const portfolio = portfolios.find(p => p.id == item.dataset.id);
+      if (portfolio) {
+        state = { ...state, ...portfolio, showDashboard: false };
+        initApp();
+      }
+    };
+  });
+};
+
+const updateTempItem = (data) => {
+  let type = '';
+  if (state.currentStep === 3) type = 'experience';
+  else if (state.currentStep === 4) type = 'education';
+  else if (state.currentStep === 5) type = 'projects';
+  
+  state.tempItem = { ...data, type };
+  updatePreview();
 };
 
 const attachAddingListeners = () => {
@@ -272,10 +429,24 @@ const attachAddingListeners = () => {
         }
       }
       state.isAdding = false;
+      state.tempItem = null;
       saveState();
       renderStepContent();
     };
   }
+
+  // Real-time updates for adding form
+  const inputs = document.querySelectorAll('.form-section input, .form-section textarea');
+  inputs.forEach(input => {
+    input.addEventListener('input', () => {
+      const data = {};
+      inputs.forEach(i => {
+        const field = i.id.replace('add-', '');
+        data[field] = i.value;
+      });
+      updateTempItem(data);
+    });
+  });
 };
 
 const attachEventListeners = () => {
@@ -283,6 +454,99 @@ const attachEventListeners = () => {
   const nextBtn = document.querySelector('#next-btn');
   const prevBtn = document.querySelector('#prev-btn');
   const exportBtn = document.querySelector('#export-btn');
+
+  // Step 1 Resume Upload
+  const uploadZone = document.querySelector('#resume-upload-zone');
+  const fileInput = document.querySelector('#resume-file');
+  
+  if (uploadZone && fileInput) {
+    uploadZone.onclick = () => fileInput.click();
+    
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      uploadZone.innerHTML = `<span class="import-icon">⏳</span><p>Parsing Resume...</p>`;
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          try {
+            const typedarray = new Uint8Array(this.result);
+            
+            // Fix: Use window.pdfjsLib which is standard for CDN loads
+            const pdfjsLib = window.pdfjsLib;
+            if (!pdfjsLib) {
+              throw new Error('PDF.js library not loaded');
+            }
+
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            
+            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+            const pdf = await loadingTask.promise;
+            let fullText = '';
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              
+              let lastY = -1;
+              let pageText = '';
+              
+              for (const item of textContent.items) {
+                const currentY = item.transform[5];
+                if (lastY !== -1 && Math.abs(currentY - lastY) > 5) {
+                  pageText += '\n';
+                }
+                pageText += item.str + ' ';
+                lastY = currentY;
+              }
+              fullText += pageText + '\n';
+            }
+            
+            console.log('Extracted text:', fullText);
+            const parsed = parseResumeText(fullText);
+            
+            // Merge parsed data into state (Overwrite for fresh start)
+            let count = 0;
+            if (parsed.name) { state.name = parsed.name; count++; }
+            if (parsed.bio) { state.bio = parsed.bio; count++; }
+            
+            if (parsed.skills?.length) {
+              state.skills = [...parsed.skills];
+              count += parsed.skills.length;
+            }
+            if (parsed.experience?.length) {
+              state.experience = [...parsed.experience];
+              count += parsed.experience.length;
+            }
+            if (parsed.education?.length) {
+              state.education = [...parsed.education];
+              count += parsed.education.length;
+            }
+            
+            saveState();
+            initApp();
+            
+            if (count > 0) {
+              alert(`Resume imported! We found ${count} items (name, skills, etc.) and auto-filled them.`);
+            } else {
+              alert('Resume parsed, but we couldn\'t identify specific sections. Please ensure your PDF is selectable text.');
+            }
+          } catch (innerErr) {
+            console.error('Inner parsing error:', innerErr);
+            alert(`Error parsing PDF: ${innerErr.message}`);
+            initApp();
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (err) {
+        console.error('Outer parsing error:', err);
+        alert('Error reading file. Please try again.');
+        initApp();
+      }
+    };
+  }
 
   // Step 1 Inputs
   const nameInput = document.querySelector('#input-name');
@@ -372,6 +636,56 @@ const attachEventListeners = () => {
     };
   }
 
+  // Auth and Dashboard
+  const logoutBtn = document.querySelector('#logout-btn');
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      state.currentUser = null;
+      state.showDashboard = false;
+      initApp();
+    };
+  }
+
+  const dashboardBtn = document.querySelector('#dashboard-btn');
+  if (dashboardBtn) {
+    dashboardBtn.onclick = () => {
+      state.showDashboard = !state.showDashboard;
+      initApp();
+    };
+  }
+
+  const savePortfolioBtn = document.querySelector('#save-portfolio-btn');
+  if (savePortfolioBtn) {
+    savePortfolioBtn.onclick = () => {
+      if (!state.currentUser) return;
+      auth.savePortfolio(state.currentUser.username, {
+        ...state,
+        id: state.id || Date.now(), // Preserve ID if it exists
+        updatedAt: new Date().toISOString()
+      });
+      alert('Portfolio saved successfully!');
+      initApp();
+    };
+  }
+
+  // Theme Switching
+  document.querySelectorAll('.theme-option').forEach(opt => {
+    opt.onclick = () => {
+      state.theme = opt.dataset.theme;
+      saveState();
+      initApp(); // Re-render sidebar to show active theme
+    };
+  });
+
+  const modeBtn = document.querySelector('#mode-toggle-btn');
+  if (modeBtn) {
+    modeBtn.onclick = () => {
+      state.mode = state.mode === 'dark' ? 'light' : 'dark';
+      saveState();
+      initApp();
+    };
+  }
+
   if (exportBtn) {
     exportBtn.onclick = () => {
       const html = generatePortfolioHTML(state);
@@ -389,9 +703,28 @@ const attachEventListeners = () => {
 const updatePreview = () => {
   const iframe = document.querySelector('#preview-frame');
   if (iframe) {
-    const html = generatePortfolioHTML(state);
+    const dataToRender = state.currentUser ? state : { ...demoState, mode: state.mode, theme: state.theme };
+    const html = generatePortfolioHTML(dataToRender);
     iframe.srcdoc = html;
   }
+};
+
+const demoState = {
+  name: 'John Doe',
+  bio: 'A passionate Full Stack Developer with 5+ years of experience building scalable web applications. I love turning complex problems into simple, beautiful designs.',
+  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'Docker', 'AWS', 'PostgreSQL', 'Tailwind CSS'],
+  experience: [
+    { role: 'Senior Developer', company: 'Tech Solutions Inc.', duration: '2021 - Present', description: 'Leading a team of 10 developers to build modern SaaS platforms.' },
+    { role: 'Software Engineer', company: 'Creative Agency', duration: '2018 - 2021', description: 'Developed highly interactive user interfaces and managed cloud deployments.' }
+  ],
+  education: [
+    { degree: 'B.S. Computer Science', school: 'Tech University', year: '2018' }
+  ],
+  projects: [
+    { title: 'CloudSync', description: 'A real-time file synchronization service.', tech: 'Go, WebSockets, S3' }
+  ],
+  theme: 'minimal',
+  mode: 'dark'
 };
 
 const renderPreview = () => {
@@ -405,6 +738,13 @@ const renderPreview = () => {
 
 // --- App Initialization ---
 const initApp = () => {
+  // Update body theme
+  if (state.mode === 'light') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
+  }
+
   app.innerHTML = '';
   const mainContainer = document.createElement('div');
   mainContainer.className = 'builder-container';
@@ -414,6 +754,7 @@ const initApp = () => {
   
   app.appendChild(mainContainer);
   renderStepContent();
+  attachEventListeners();
   updatePreview();
 };
 
