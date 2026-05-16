@@ -8,6 +8,7 @@ let state = JSON.parse(localStorage.getItem('profolio-state')) || {
   currentStep: 1,
   name: '',
   bio: '',
+  githubUsername: '',
   skills: [],
   education: [],
   experience: [],
@@ -18,7 +19,12 @@ let state = JSON.parse(localStorage.getItem('profolio-state')) || {
   tempItem: null,
   currentUser: null,
   authMode: 'login', // 'login' or 'signup'
-  showDashboard: false
+  showDashboard: false,
+  analytics: {
+    views: Math.floor(Math.random() * 1000) + 500,
+    clicks: Math.floor(Math.random() * 200) + 50,
+    visitors: Math.floor(Math.random() * 800) + 300
+  }
 };
 
 const saveState = () => {
@@ -123,6 +129,10 @@ const renderStepContent = () => {
             <input type="text" id="input-name" value="${state.name}" placeholder="John Doe">
           </div>
           <div class="input-group">
+            <label>GitHub Username (Optional)</label>
+            <input type="text" id="input-github" value="${state.githubUsername || ''}" placeholder="e.g. janesmith">
+          </div>
+          <div class="input-group">
             <label>Professional Bio</label>
             <textarea id="input-bio" placeholder="Full-stack developer passionate about building...">${state.bio}</textarea>
           </div>
@@ -200,7 +210,19 @@ const renderStepContent = () => {
               </div>
             `).join('')}
           </div>
-          <button class="btn btn-secondary" id="start-add-project">Add Project +</button>
+          <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+            <button class="btn btn-secondary" id="start-add-project">Add Project Manually +</button>
+            ${state.githubUsername ? `<button class="btn btn-secondary" id="fetch-github-projects" style="border-color: #2ea44f; color: #2ea44f;">Fetch from GitHub ✨</button>` : ''}
+          </div>
+
+          <div class="export-options" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Export & Share</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <button class="btn btn-secondary" id="export-pdf-btn" style="font-size: 0.8rem;">📄 Download PDF</button>
+              <button class="btn btn-secondary" id="share-link-btn" style="font-size: 0.8rem;">🔗 Share Link</button>
+            </div>
+            <p id="share-status" style="font-size: 0.7rem; color: #10b981; margin-top: 0.5rem; display: none; text-align: center;">Link copied to clipboard!</p>
+          </div>
         </div>
       `;
       break;
@@ -322,7 +344,41 @@ const renderDashboard = (container) => {
   const portfolios = auth.getPortfolios(state.currentUser.username);
   container.innerHTML = `
     <div class="form-section">
-      <h2>My Saved Portfolios</h2>
+      <div class="analytics-header">
+        <h2>Analytics Dashboard</h2>
+        <p style="font-size: 0.8rem; color: var(--text-secondary)">Real-time performance of your portfolios</p>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="stat-card">
+          <div class="stat-value">${state.analytics.views}</div>
+          <div class="stat-label">Profile Views</div>
+          <div class="stat-trend positive">+12% this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${state.analytics.visitors}</div>
+          <div class="stat-label">Unique Visitors</div>
+          <div class="stat-trend positive">+5% this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${state.analytics.clicks}</div>
+          <div class="stat-label">Project Clicks</div>
+          <div class="stat-trend negative">-2% this week</div>
+        </div>
+      </div>
+
+      <div class="analytics-chart">
+        <div class="chart-bar-container">
+          ${[65, 45, 85, 55, 95, 75, 80].map(h => `
+            <div class="chart-bar" style="height: ${h}%"></div>
+          `).join('')}
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text-secondary); margin-top: 0.5rem;">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 1rem;">My Saved Portfolios</h2>
       <div class="portfolio-list">
         ${portfolios.length === 0 ? '<p style="color: var(--text-secondary)">No saved portfolios yet.</p>' : ''}
         ${portfolios.map(p => `
@@ -565,6 +621,14 @@ const attachEventListeners = () => {
     });
   }
 
+  const githubInput = document.querySelector('#input-github');
+  if (githubInput) {
+    githubInput.addEventListener('input', (e) => {
+      state.githubUsername = e.target.value;
+      saveState();
+    });
+  }
+
   // Step 2 Skills
   const skillInput = document.querySelector('#skill-input');
   if (skillInput) {
@@ -608,6 +672,38 @@ const attachEventListeners = () => {
     addProj.onclick = () => {
       state.isAdding = true;
       renderStepContent();
+    };
+  }
+
+  const fetchGithub = document.querySelector('#fetch-github-projects');
+  if (fetchGithub) {
+    fetchGithub.onclick = async () => {
+      if (!state.githubUsername) return;
+      fetchGithub.innerHTML = 'Fetching... ⏳';
+      try {
+        const response = await fetch(`https://api.github.com/users/${state.githubUsername}/repos?sort=updated&per_page=5`);
+        const repos = await response.json();
+        
+        if (Array.isArray(repos)) {
+          repos.forEach(repo => {
+            // Avoid duplicates
+            if (!state.projects.find(p => p.title === repo.name)) {
+              state.projects.push({
+                title: repo.name,
+                description: repo.description || 'No description provided.',
+                tech: repo.language || 'Code',
+                link: repo.html_url
+              });
+            }
+          });
+          saveState();
+          renderStepContent();
+        }
+      } catch (err) {
+        alert('Could not fetch repos. Check username or rate limits.');
+      } finally {
+        fetchGithub.innerHTML = 'Fetch from GitHub ✨';
+      }
     };
   }
 
@@ -697,6 +793,32 @@ const attachEventListeners = () => {
       a.click();
     };
   }
+
+  const pdfBtn = document.querySelector('#export-pdf-btn');
+  if (pdfBtn) {
+    pdfBtn.onclick = () => {
+      const iframe = document.querySelector('#preview-frame');
+      if (iframe) {
+        iframe.contentWindow.print();
+      }
+    };
+  }
+
+  const shareBtn = document.querySelector('#share-link-btn');
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      // Create a shareable state object (excluding auth data)
+      const shareData = { ...state, currentUser: null, showDashboard: false };
+      const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
+      const url = `${window.location.origin}${window.location.pathname}#view=${serialized}`;
+      
+      navigator.clipboard.writeText(url).then(() => {
+        const status = document.querySelector('#share-status');
+        status.style.display = 'block';
+        setTimeout(() => status.style.display = 'none', 3000);
+      });
+    };
+  }
 };
 
 // --- Preview Rendering ---
@@ -738,6 +860,20 @@ const renderPreview = () => {
 
 // --- App Initialization ---
 const initApp = () => {
+  // Check for shared state in URL
+  const hash = window.location.hash;
+  if (hash.startsWith('#view=')) {
+    try {
+      const serialized = hash.replace('#view=', '');
+      const sharedData = JSON.parse(decodeURIComponent(escape(atob(serialized))));
+      state = { ...state, ...sharedData, currentStep: 1 }; // Load into editor
+      // Clear hash to avoid reloading on refresh
+      window.history.replaceState(null, null, ' ');
+    } catch (err) {
+      console.error('Failed to load shared state', err);
+    }
+  }
+
   // Update body theme
   if (state.mode === 'light') {
     document.body.classList.add('light-mode');

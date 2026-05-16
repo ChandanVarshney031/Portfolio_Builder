@@ -65,6 +65,45 @@ h1, h2, h3, h4, h5, h6 {
   .builder-container {
     grid-template-columns: 1fr;
     height: auto;
+    overflow-y: visible;
+  }
+  
+  .builder-sidebar {
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1.5rem;
+  }
+
+  .preview-container {
+    height: 600px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+}
+
+@media (max-width: 480px) {
+  .builder-sidebar {
+    padding: 1rem;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+  }
+
+  .builder-title {
+    font-size: 1.25rem;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .theme-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -454,4 +493,76 @@ textarea {
 .portfolio-meta {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+/* Analytics Dashboard Styles */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-trend {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.stat-trend.positive { color: #10b981; }
+.stat-trend.negative { color: #ef4444; }
+
+.analytics-chart {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.chart-bar-container {
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.chart-bar {
+  flex: 1;
+  background: var(--accent-gradient);
+  border-radius: 4px 4px 0 0;
+  transition: height 1s ease-out;
+  opacity: 0.8;
+}
+
+.chart-bar:hover {
+  opacity: 1;
+  filter: brightness(1.2);
+}
+
+.analytics-header {
+  margin-bottom: 0.5rem;
 }

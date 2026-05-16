@@ -62,12 +62,16 @@ export const generatePortfolioHTML = (data) => {
 
   const projectsHTML = displayProjects.map(proj => `
     <div class="p-project-card">
-      <div class="p-project-image"><span>${proj.icon || '🚀'}</span></div>
+      <div class="p-project-image">
+        <span>${proj.icon || (proj.link && proj.link.includes('github.com') ? '🐙' : '🚀')}</span>
+      </div>
       <div class="p-project-info">
         <h3>${proj.title || 'Project Title'}</h3>
         <p>${proj.description || 'Project description...'}</p>
         <div class="p-project-tags">${(proj.tech || '').split(',').map(t => t.trim() ? `<span class="p-tag">${t.trim()}</span>` : '').join('')}</div>
-        ${proj.link ? `<a href="${proj.link}" target="_blank" class="p-link">View Project →</a>` : ''}
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          ${proj.link ? `<a href="${proj.link}" target="_blank" class="p-link" style="text-decoration: none; font-weight: 600;">${proj.link.includes('github.com') ? 'View Source →' : 'Live Demo →'}</a>` : ''}
+        </div>
       </div>
     </div>
   `).join('');
@@ -91,6 +95,15 @@ export const generatePortfolioHTML = (data) => {
       
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
       .reveal { animation: fadeInUp 0.8s ease forwards; }
+
+      @media (max-width: 768px) {
+        body { padding-top: 60px; }
+        section { padding: 4rem 0; }
+        .p-container { padding: 0 1.5rem; }
+        .p-timeline-item { grid-template-columns: 1fr; gap: 0.5rem; }
+        .p-hero h1 { font-size: 3rem; }
+        .section-title { font-size: 2.5rem; margin-bottom: 2rem; }
+      }
     `;
 
     if (theme === 'creative') {
