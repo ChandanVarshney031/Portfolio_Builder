@@ -81,10 +81,13 @@ const renderForm = () => {
 
     <div id="form-content"></div>
 
-    <div class="builder-footer" style="margin-top: auto; display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border)">
+    <div class="builder-footer" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--glass-border)">
       ${state.currentUser ? (state.showDashboard ? '' : `
-        <button class="btn btn-secondary" id="save-portfolio-btn">Save Progress</button>
-        ${state.currentStep < 5 ? '<button class="btn btn-primary" style="flex: 1" id="next-btn">Next Step</button>' : '<button class="btn btn-primary" style="flex: 1" id="export-btn">Export Website</button>'}
+        <div style="display: flex; gap: 0.5rem; width: 100%;">
+          ${state.currentStep > 1 ? '<button class="btn btn-secondary" id="prev-btn" style="flex: 1;">← Back</button>' : ''}
+          ${state.currentStep < 5 ? '<button class="btn btn-primary" style="flex: 2;" id="next-btn">Next Step →</button>' : '<button class="btn btn-primary" style="flex: 2;" id="export-btn">Export Website 🚀</button>'}
+        </div>
+        <button class="btn btn-secondary" id="save-portfolio-btn" style="width: 100%;">Save Progress</button>
       `) : ''}
     </div>
   `;
