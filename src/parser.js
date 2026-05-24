@@ -3,6 +3,7 @@ export const parseResumeText = (text) => {
     skills: [],
     experience: [],
     education: [],
+    projects: [],
     name: '',
     bio: ''
   };
@@ -12,8 +13,9 @@ export const parseResumeText = (text) => {
   // 1. Identify Section Positions
   const sections = [
     { key: 'skills', patterns: [/TECHNICAL SKILLS/i, /SKILLS/i, /TECHNOLOGIES/i, /EXPERTISE/i, /TOOLS/i, /STACK/i] },
-    { key: 'experience', patterns: [/PROFESSIONAL EXPERIENCE/i, /EXPERIENCE/i, /EMPLOYMENT/i, /WORK HISTORY/i, /PROJECTS/i, /CAREER/i, /Work Experience/i] },
+    { key: 'experience', patterns: [/PROFESSIONAL EXPERIENCE/i, /EXPERIENCE/i, /EMPLOYMENT/i, /WORK HISTORY/i, /CAREER/i, /Work Experience/i] },
     { key: 'education', patterns: [/EDUCATION/i, /ACADEMIC/i, /UNIVERSITY/i, /COLLEGE/i, /DEGREE/i] },
+    { key: 'projects', patterns: [/PROJECTS/i, /PERSONAL PROJECTS/i, /ACADEMIC PROJECTS/i, /KEY PROJECTS/i] },
     { key: 'bio', patterns: [/SUMMARY/i, /PROFILE/i, /ABOUT/i, /OBJECTIVE/i, /Personal Profile/i] }
   ];
 
@@ -63,7 +65,6 @@ export const parseResumeText = (text) => {
         if (s && s.length > 1 && s.length < 30 && !/^\d+$/.test(s)) result.skills.push(s);
       });
     } else if (sectionKey === 'education') {
-      // Split by common dividers like | or large gaps
       const parts = sectionText.split(/\||\n|\s{4,}/);
       parts.forEach(part => {
         const cleanPart = part.trim();
@@ -80,7 +81,6 @@ export const parseResumeText = (text) => {
         }
       });
     } else if (sectionKey === 'experience') {
-      // Experience often has more complex lines
       const lines = sectionText.split(/\n|\s{4,}/);
       lines.forEach(line => {
         const yearMatch = line.match(/\b(20\d{2}|19\d{2})\b/);
@@ -94,6 +94,64 @@ export const parseResumeText = (text) => {
           });
         }
       });
+    } else if (sectionKey === 'projects') {
+      // Split section text by double newlines or lines starting with bullet points/dashes
+      const blocks = sectionText.split(/\n\s*\n/);
+      blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return;
+
+        // Heuristic: First line is the title
+        let title = lines[0].replace(/^[\s•\-\*·]+/, '').trim();
+        
+        // Find URLs/Links in the entire block
+        const linkRegex = /(https?:\/\/[^\s\(\)]+)|(github\.com\/[a-zA-Z0-9_\-\/]+)|(www\.[a-zA-Z0-9_\-\.]+\.[a-z]{2,})/i;
+        const linkMatch = block.match(linkRegex);
+        let link = '';
+        if (linkMatch) {
+          link = linkMatch[0];
+          // Ensure it has protocol
+          if (!link.startsWith('http')) {
+            link = 'https://' + link;
+          }
+          // Remove link from title if it was appended
+          title = title.replace(linkRegex, '').replace(/\s*[\-\|·]\s*$/, '').trim();
+        }
+
+        // Find Tech Tags in the block
+        let tech = '';
+        const techKeywords = /(?:Technologies|Tech Stack|Tech|Stack|Tools|Built with):\s*([^\n]+)/i;
+        const techMatch = block.match(techKeywords);
+        if (techMatch) {
+          tech = techMatch[1].trim();
+        } else {
+          // Fallback: look for common programming words
+          const commonTech = /\b(React|Angular|Vue|Node\.?js|JavaScript|TypeScript|Python|Django|Flask|Java|Spring|C\+\+|Ruby|Rails|PHP|Laravel|Swift|Kotlin|Flutter|Go|Rust|Docker|Kubernetes|AWS|Firebase|MongoDB|PostgreSQL|MySQL|HTML|CSS|Sass)\b/gi;
+          const foundTech = block.match(commonTech);
+          if (foundTech) {
+            tech = [...new Set(foundTech)].join(', ');
+          }
+        }
+
+        // Description is everything else
+        let descriptionLines = lines.slice(1);
+        // Filter out tech-only lines
+        descriptionLines = descriptionLines.filter(line => !techKeywords.test(line));
+        let description = descriptionLines.join(' ').replace(/^[\s•\-\*·]+/, '').trim();
+        // Remove link from description if it was explicitly there
+        if (linkMatch) {
+          description = description.replace(linkMatch[0], '').replace(/\s*[\-\|·]\s*$/, '').trim();
+        }
+
+        if (title && title.length > 2 && title.length < 50) {
+          result.projects.push({
+            title: title,
+            description: description || 'Personal/Academic Project developed with modern technologies.',
+            tech: tech || 'Software Development',
+            link: link
+          });
+        }
+      });
     } else if (sectionKey === 'bio') {
       if (!result.bio) result.bio = sectionText.substring(0, 500);
     }
@@ -103,6 +161,7 @@ export const parseResumeText = (text) => {
   result.skills = [...new Set(result.skills)].slice(0, 15);
   result.experience = result.experience.slice(0, 5);
   result.education = result.education.slice(0, 3);
+  result.projects = result.projects.slice(0, 5);
 
   return result;
 };

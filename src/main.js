@@ -580,6 +580,10 @@ const attachEventListeners = () => {
               state.education = [...parsed.education];
               count += parsed.education.length;
             }
+            if (parsed.projects?.length) {
+              state.projects = [...parsed.projects];
+              count += parsed.projects.length;
+            }
             
             saveState();
             initApp();
