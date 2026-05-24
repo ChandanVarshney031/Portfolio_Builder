@@ -767,12 +767,19 @@ const attachEventListeners = () => {
         state.id = Date.now();
       }
       
-      saveState(); // Persist the ID in local state
-
-      auth.savePortfolio(state.currentUser.username, {
+      const dataToSave = {
         ...state,
         updatedAt: new Date().toISOString()
-      });
+      };
+      
+      auth.savePortfolio(state.currentUser.username, dataToSave);
+      
+      // Keep persistent ID inside local state if matched/updated in savePortfolio (deduplication)
+      if (dataToSave.id && dataToSave.id !== state.id) {
+        state.id = dataToSave.id;
+      }
+      
+      saveState(); // Persist the ID in local state
       alert('Portfolio saved successfully!');
       initApp();
     };
