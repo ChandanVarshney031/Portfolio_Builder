@@ -1,5 +1,5 @@
 export const auth = {
-  getUsers: () => JSON.parse(localStorage.getItem('profolio-users')) || [],
+  getUsers: () => JSON.parse(localStorage.getItem('portfolio-users')) || [],
   
   signup: (username, password) => {
     const users = auth.getUsers();
@@ -8,7 +8,7 @@ export const auth = {
     }
     const newUser = { username, password, portfolios: [] };
     users.push(newUser);
-    localStorage.setItem('profolio-users', JSON.stringify(users));
+    localStorage.setItem('portfolio-users', JSON.stringify(users));
     return newUser;
   },
 
@@ -34,7 +34,7 @@ export const auth = {
       users[userIdx].portfolios.push({ ...portfolioData, id: Date.now(), createdAt: new Date().toISOString() });
     }
 
-    localStorage.setItem('profolio-users', JSON.stringify(users));
+    localStorage.setItem('portfolio-users', JSON.stringify(users));
   },
 
   getPortfolios: (username) => {

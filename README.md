@@ -1,10 +1,10 @@
-# 🚀 ProFolio | Premium Portfolio Builder
+# 🚀 Portfolio | Premium Portfolio Builder
 
 <p align="center">
-  <img src="./public/favicon.svg" alt="ProFolio Logo" width="100" />
+  <img src="./public/favicon.svg" alt="Portfolio Logo" width="100" />
 </p>
 
-<h3 align="center">ProFolio</h3>
+<h3 align="center">Portfolio</h3>
 
 <p align="center">
   <strong>Build a stunning, professional portfolio website in minutes.</strong> No-code setup, real-time interactive preview, PDF resume parsing, GitHub integration, and one-click static exports.
@@ -24,7 +24,7 @@
 
 ### 1. Interactive Editor & Live Preview
 Create, modify, and fine-tune your portfolio details on the left, and watch your portfolio automatically render, style, and animate inside a real-time side-by-side device preview.
-![ProFolio Editor Dashboard](./docs/images/dashboard_mockup.png)
+![Portfolio Editor Dashboard](./docs/images/dashboard_mockup.png)
 
 ### 2. Premium Custom Themes
 Toggle between four curated, responsive layout designs specifically tailored for different professional goals, complete with dedicated light/dark variants:
@@ -32,19 +32,19 @@ Toggle between four curated, responsive layout designs specifically tailored for
 * **Creative** — Loud typography, high contrast, rotated badge elements, and thick playful borders.
 * **Corporate** — Structured experience timelines, serif-focused headers, and sleek navy accents.
 * **Modern** — Dynamic frosted-glass effects (glassmorphism), glowing neon blurs, and elegant interactive scales.
-![ProFolio Custom Themes](./docs/images/themes_mockup.png)
+![Portfolio Custom Themes](./docs/images/themes_mockup.png)
 
 ### 3. Analytics & Portfolio Manager
-ProFolio features a full-fledged authentication and user database simulated securely on the client. Save, update, and manage multiple portfolios from a dashboard equipped with rich traffic tracking.
+Portfolio features a full-fledged authentication and user database simulated securely on the client. Save, update, and manage multiple portfolios from a dashboard equipped with rich traffic tracking.
 ![Analytics Dashboard](./docs/images/analytics_mockup.png)
 
 ---
 
 ## ✨ Features
 
-* **📄 Smart Resume Parser (PDF)** — Drag-and-drop your existing PDF resume! Using client-side `pdf.js` content rendering and heuristic pattern mapping, ProFolio instantly extracts and populates your name, bio, skills, professional work history, and academic experience.
+* **📄 Smart Resume Parser (PDF)** — Drag-and-drop your existing PDF resume! Using client-side `pdf.js` content rendering and heuristic pattern mapping, Portfolio instantly extracts and populates your name, bio, skills, professional work history, and academic experience.
 * **🐙 GitHub Projects Sync** — Enter your GitHub username and instantly pull your top public repositories, languages, descriptions, and direct source links with a single click.
-* **🎨 Modern Responsive Themes** — Fully responsive designs styled beautifully with modern design systems (Inter & Outfit fonts, curated HSL color maps, neomorphic buttons, and sleek CSS transitions).
+* **🎨 Modern Responsive Themes** — Fully responsive designs styled beautifully with modern design systems (Inter & Outfit fonts, curated HSL color maps, neomorphic borders, and sleek CSS transitions).
 * **🖥️ Interactive Mode Switcher** — Seamless dark-mode and light-mode toggling for all themes.
 * **💾 Pure Static Export** — Download your completed portfolio as a highly optimized, single-file static HTML bundle, completely ready to host on **GitHub Pages**, **Vercel**, or **Netlify**!
 * **📊 Simulated Analytics Dashboard** — Monitor profile views, unique visitors, and project clicks through animated SVG bar charts and responsive metric displays.

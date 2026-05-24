@@ -4,7 +4,7 @@ import { parseResumeText } from './parser.js'
 import { auth } from './auth.js'
 
 // --- State Management ---
-let state = JSON.parse(localStorage.getItem('profolio-state')) || {
+let state = JSON.parse(localStorage.getItem('portfolio-state')) || {
   currentStep: 1,
   name: '',
   bio: '',
@@ -28,7 +28,7 @@ let state = JSON.parse(localStorage.getItem('profolio-state')) || {
 };
 
 const saveState = () => {
-  localStorage.setItem('profolio-state', JSON.stringify(state));
+  localStorage.setItem('portfolio-state', JSON.stringify(state));
   updatePreview();
 };
 
