@@ -98,7 +98,6 @@ export const generatePortfolioHTML = (data) => {
           <div class="min-socials">
             <a href="#projects">Portfolio</a>
             <a href="#experience">About</a>
-            <a href="#contact">Contact</a>
           </div>
         </header>
 
@@ -127,14 +126,6 @@ export const generatePortfolioHTML = (data) => {
             <div class="min-timeline">${educationHTML || '<p class="empty-msg">No education added yet.</p>'}</div>
           </section>
 
-          <!-- Contact Section -->
-          <section id="contact" class="reveal min-contact-section">
-            <h2 class="min-section-title">Let's Connect</h2>
-            <p>I'm currently available for interesting opportunities and collaboration.</p>
-            <div style="margin-top: 1.5rem;">
-              <a href="mailto:hello@example.com" class="min-btn">Say Hello</a>
-            </div>
-          </section>
         </div>
       `;
     }
@@ -190,7 +181,7 @@ export const generatePortfolioHTML = (data) => {
             </h1>
             <div class="crt-bio-content">${formatBio(bio)}</div>
             <div style="margin-top: 2.5rem;">
-              <a href="#contact" class="crt-action-btn">Learn More</a>
+              <a href="#projects" class="crt-action-btn">Explore Works</a>
             </div>
           </header>
 
@@ -218,14 +209,6 @@ export const generatePortfolioHTML = (data) => {
             <div class="crt-timeline-grid">${educationHTML || '<p class="empty-msg">No education added yet.</p>'}</div>
           </section>
 
-          <!-- Contact Footer Section -->
-          <section id="contact" class="reveal crt-contact-section">
-            <h2 class="crt-section-title" style="color: #fff; -webkit-text-stroke: 0;">Let's Create</h2>
-            <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 1rem auto 2rem auto;">
-              Have a wild concept or project in mind? Let's team up and construct something remarkable.
-            </p>
-            <a href="mailto:hello@example.com" class="crt-action-btn" style="box-shadow: 0 0 30px rgba(244,63,94,0.5);">Start a Project</a>
-          </section>
         </div>
       `;
     }
@@ -316,20 +299,6 @@ export const generatePortfolioHTML = (data) => {
             <div class="corp-timeline-container">${educationHTML || '<p class="empty-msg">No education added yet.</p>'}</div>
           </section>
 
-          <!-- Contact Section -->
-          <section id="contact" class="reveal corp-contact-section">
-            <h2 class="corp-section-title">Get In Touch</h2>
-            <div class="corp-contact-card">
-              <div class="corp-contact-row">
-                <span>Direct Inquiry</span>
-                <span class="corp-contact-val">hello@example.com</span>
-              </div>
-              <div class="corp-contact-row">
-                <span>Secure Credentials</span>
-                <span class="corp-contact-val">Verified Professional</span>
-              </div>
-            </div>
-          </section>
         </div>
       `;
     }
@@ -411,14 +380,6 @@ export const generatePortfolioHTML = (data) => {
             <div class="mod-experience-grid">${educationHTML || '<p class="empty-msg">No education added yet.</p>'}</div>
           </section>
 
-          <!-- Modern Contact Footer -->
-          <section id="contact" class="reveal mod-contact-section">
-            <h2 class="mod-section-title">Let's Collaborate</h2>
-            <div class="mod-glass-card mod-contact-container">
-              <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Have a dynamic project or role? Let's build together.</p>
-              <a href="mailto:hello@example.com" class="mod-contact-action-btn">Connect Instantly</a>
-            </div>
-          </section>
         </div>
       `;
     }
