@@ -761,9 +761,16 @@ const attachEventListeners = () => {
   if (savePortfolioBtn) {
     savePortfolioBtn.onclick = () => {
       if (!state.currentUser) return;
+      
+      // Ensure active state has an assigned ID so we update instead of duplicate
+      if (!state.id) {
+        state.id = Date.now();
+      }
+      
+      saveState(); // Persist the ID in local state
+
       auth.savePortfolio(state.currentUser.username, {
         ...state,
-        id: state.id || Date.now(), // Preserve ID if it exists
         updatedAt: new Date().toISOString()
       });
       alert('Portfolio saved successfully!');
